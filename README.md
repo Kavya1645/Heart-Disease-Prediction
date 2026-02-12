@@ -31,6 +31,10 @@ The system predicts:
 - 0 → Low Risk
 - 1 → High Risk
 
+  ## Application Screenshot
+![App Screenshot](screenshot.png)
+
+
 ---
 
 Developed by Kavya Shah
