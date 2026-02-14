@@ -4,6 +4,8 @@ import streamlit as st
 import numpy as np
 import joblib
 
+# ---------------- DATABASE ----------------
+
 conn = sqlite3.connect("patients.db")
 c = conn.cursor()
 
@@ -15,6 +17,14 @@ CREATE TABLE IF NOT EXISTS patient_data (
     cp INTEGER,
     trestbps INTEGER,
     chol INTEGER,
+    fbs INTEGER,
+    restecg INTEGER,
+    thalach INTEGER,
+    exang INTEGER,
+    oldpeak REAL,
+    slope INTEGER,
+    ca INTEGER,
+    thal INTEGER,
     prediction INTEGER,
     timestamp TEXT
 )
@@ -22,8 +32,12 @@ CREATE TABLE IF NOT EXISTS patient_data (
 
 conn.commit()
 
+# ---------------- MODEL ----------------
+
 model = joblib.load("heart_model.pkl")
 scaler = joblib.load("scaler.pkl")
+
+# ---------------- UI ----------------
 
 st.title("Heart Disease Prediction System")
 
@@ -41,6 +55,8 @@ slope = st.number_input("Slope (0-2)", 0,2)
 ca = st.number_input("Number of Major Vessels (0-3)", 0,3)
 thal = st.number_input("Thal (0-3)", 0,3)
 
+# ---------------- PREDICT BUTTON ----------------
+
 if st.button("Predict"):
 
     input_data = np.array([[age, sex, cp, trestbps, chol, fbs,
@@ -52,11 +68,21 @@ if st.button("Predict"):
 
     result = int(prediction[0])
 
-    # Save to database
+    # Insert into database
     c.execute("""
-        INSERT INTO patient_data (age, sex, cp, trestbps, chol, prediction, timestamp)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-    """, (age, sex, cp, trestbps, chol, result, datetime.now()))
+        INSERT INTO patient_data (
+            age, sex, cp, trestbps, chol,
+            fbs, restecg, thalach, exang,
+            oldpeak, slope, ca, thal,
+            prediction, timestamp
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (
+        age, sex, cp, trestbps, chol,
+        fbs, restecg, thalach, exang,
+        oldpeak, slope, ca, thal,
+        result, datetime.now()
+    ))
 
     conn.commit()
 
@@ -64,6 +90,8 @@ if st.button("Predict"):
         st.error("High Risk of Heart Disease")
     else:
         st.success("Low Risk of Heart Disease")
+
+# ---------------- HISTORY ----------------
 
 if st.checkbox("Show Patient History"):
     records = c.execute("SELECT * FROM patient_data").fetchall()
